@@ -9,7 +9,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3  # Adjust based on your available GPUs
 # Training configuration
 CONFIG_FILE="configs/custom/imagenet64-dsno.yaml"
 NUM_GPUS=1  # Adjust based on your setup
-BATCH_SIZE=8  # Per GPU batch size
+BATCH_SIZE=32  # Per GPU batch size
 LOG_DIR="exp/ImageNet64-DSNO-Custom"
 
 # Create log directory
@@ -24,7 +24,7 @@ echo "Log directory: $LOG_DIR"
 # Single GPU training
 if [ $NUM_GPUS -eq 1 ]; then
     echo "Running single GPU training..."
-    python train_imagenet.py \
+    python train_imagenet_fixed.py \
         --config $CONFIG_FILE \
         --log \
         --seed 42 \
@@ -36,7 +36,7 @@ if [ $NUM_GPUS -eq 1 ]; then
 # Multi-GPU training
 else
     echo "Running multi-GPU training on $NUM_GPUS GPUs..."
-    python train_imagenet.py \
+    python train_imagenet_fixed.py \
         --config $CONFIG_FILE \
         --log \
         --seed 42 \

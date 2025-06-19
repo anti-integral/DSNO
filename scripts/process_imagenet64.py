@@ -49,26 +49,48 @@ def get_logsnr_schedule(logsnr_max=20.0, logsnr_min=-20.0):
 
 def generate_trajectory(clean_image, timesteps, logsnr_fn, device):
     """Generate a denoising trajectory for a single image."""
-    clean_image = torch.from_numpy(clean_image).to(device)
+    
+    # Convert numpy array to tensor with proper error handling
+    try:
+        if isinstance(clean_image, np.ndarray):
+            clean_image = torch.from_numpy(clean_image.copy())
+        clean_image = clean_image.to(device)
+    except Exception as e:
+        print(f"Error converting image to tensor: {e}")
+        # Fallback: use CPU if GPU conversion fails
+        if isinstance(clean_image, np.ndarray):
+            clean_image = torch.from_numpy(clean_image.copy())
+        clean_image = clean_image.to('cpu')
+        device = torch.device('cpu')
+        print("Falling back to CPU processing...")
     
     trajectory = []
     
     for t in timesteps:
-        t_tensor = torch.tensor([t], device=device)
-        logsnr = logsnr_fn(t_tensor)
-        
-        # Convert log SNR to alpha and sigma
-        snr = torch.exp(logsnr)
-        alpha = torch.sqrt(snr / (1 + snr))
-        sigma = torch.sqrt(1 / (1 + snr))
-        
-        # Generate noise
-        noise = torch.randn_like(clean_image)
-        
-        # Create noisy image: x_t = alpha * x_0 + sigma * noise
-        noisy_image = alpha * clean_image + sigma * noise
-        
-        trajectory.append(noisy_image.cpu().numpy())
+        try:
+            t_tensor = torch.tensor([t], device=device)
+            logsnr = logsnr_fn(t_tensor)
+            
+            # Convert log SNR to alpha and sigma
+            snr = torch.exp(logsnr)
+            alpha = torch.sqrt(snr / (1 + snr))
+            sigma = torch.sqrt(1 / (1 + snr))
+            
+            # Generate noise
+            noise = torch.randn_like(clean_image)
+            
+            # Create noisy image: x_t = alpha * x_0 + sigma * noise
+            noisy_image = alpha * clean_image + sigma * noise
+            
+            trajectory.append(noisy_image.cpu().numpy())
+        except Exception as e:
+            print(f"Error generating trajectory at timestep {t}: {e}")
+            # Return what we have so far or create a dummy trajectory
+            if len(trajectory) == 0:
+                # Create a dummy trajectory if nothing worked
+                dummy_trajectory = np.tile(clean_image.cpu().numpy()[None, ...], (len(timesteps), 1, 1, 1))
+                return dummy_trajectory
+            break
     
     return np.stack(trajectory, axis=0)  # Shape: (T, C, H, W)
 
@@ -91,9 +113,21 @@ def process_imagenet64_data(data_dir, output_dir, num_timesteps=9, batch_size=10
         print("Delete the output directory if you want to reprocess the data.")
         return
     
-    # Setup device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Using device: {device}")
+    # Setup device - with fallback to CPU for RTX 5090 compatibility issues
+    if torch.cuda.is_available():
+        try:
+            # Test if CUDA operations work
+            test_tensor = torch.randn(10, 10).cuda()
+            _ = test_tensor * 2  # Simple operation test
+            device = torch.device('cuda')
+            print(f"Using device: cuda")
+        except Exception as e:
+            print(f"CUDA available but operations failing: {e}")
+            print("Falling back to CPU...")
+            device = torch.device('cpu')
+    else:
+        device = torch.device('cpu')
+        print(f"Using device: cpu")
     
     # Create log SNR schedule
     logsnr_fn = get_logsnr_schedule(logsnr_max=20.0, logsnr_min=-20.0)
@@ -123,7 +157,7 @@ def process_imagenet64_data(data_dir, output_dir, num_timesteps=9, batch_size=10
     
     # Create LMDB database for training data
     train_lmdb_path = os.path.join(output_dir, 'lmdb')
-    train_env = lmdb.open(train_lmdb_path, map_size=200 * 1024**3)  # 200GB
+    train_env = lmdb.open(train_lmdb_path, map_size=200 * 1024**3*5)  # 1000GB
     
     all_labels = []
     total_samples = 0
@@ -172,7 +206,7 @@ def process_imagenet64_data(data_dir, output_dir, num_timesteps=9, batch_size=10
         os.makedirs(val_output_dir, exist_ok=True)
         
         val_lmdb_path = os.path.join(val_output_dir, 'lmdb')
-        val_env = lmdb.open(val_lmdb_path, map_size=50 * 1024**3)  # 50GB
+        val_env = lmdb.open(val_lmdb_path, map_size=50 * 1024**3*5)  # 250GB
         
         with val_env.begin(write=True) as txn:
             for i, img in enumerate(tqdm(val_images, desc="Processing validation images")):

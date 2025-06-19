@@ -80,7 +80,12 @@ fi
 
 # Install required Python packages
 echo "Installing required packages..."
-pip install lmdb pillow tqdm omegaconf lpips wandb clean-fid torch torchvision
+echo "First, fixing NumPy installation..."
+pip uninstall -y numpy
+pip install numpy==1.24.3
+
+echo "Installing other required packages..."
+pip install lmdb pillow tqdm omegaconf lpips wandb clean-fid
 
 echo "Data check completed. Found $TRAIN_FILES_FOUND training files."
 

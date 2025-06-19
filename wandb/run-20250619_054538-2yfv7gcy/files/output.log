@@ -1,0 +1,14 @@
+Epoch :2, Loss: 420.2583923339844:   0%| | 3/480001 [03:59<7177:06:22, 53.83s/it/usr/local/lib/python3.10/dist-packages/torch/optim/lr_scheduler.py:136: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  warnings.warn("Detected call of `lr_scheduler.step()` before `optimizer.step()`. "
+Epoch :140572, Loss: nan:  29%|▉  | 140573/480001 [10:43:38<25:16:41,  3.73it/s]
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_3000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_6000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_9000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_12000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_15000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_18000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_21000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_24000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_27000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_30000.pt
+checkpoint saved at exp/ImageNet64-DSNO-Custom/ckpts/solver-model_33000.pt
